@@ -1,0 +1,621 @@
+---
+title: "Unsupervised Learning Data Report"
+output: html_document
+---
+# 1. Problem Definition
+## a. Specifying the Question
+
+Kira Plastinina is a Russian brand that is sold through a defunct chain of retail stores in Russia, Ukraine, Kazakhstan, Belarus, China, Philippines, and Armenia. The brand’s Sales and Marketing team would like to understand their customer’s behavior from data that they have collected over the past year. More specifically, they would like to learn the characteristics of customer groups.
+
+## b. Defining the metric of success
+
+Building clusters that will enable me to see patterns in the characteristics of the customer groups.
+
+## c. Understanding the context
+
+The data is from a chain of retail stores and has 18 variables as follows:
+
+* Administrative - this represents the type of page visited during that session
+* Administrative_Duration - this represents the total time spent in this page category
+* Informational - this represents the type of page visited during that session
+* Informational_Duration - this represents the total time spent in this page category
+* ProductRelated - this represents the type of page visited during that session
+* ProducrRelated_Duration - this represents the total time spent in this page category
+* BounceRates - this shows the percentage of visitors who enter the site from that page and then leave ("bounce") without triggering any other requests to the analytics server during that session 
+* ExitRates - this shows the percentage of all pageviews to the page, that was the last in the session
+* PageValues - this shows a representation of the average value for a web page that a user visited before completing an e-commerce transaction. 
+* SpecialDay - this feature indicates the closeness of the site visiting time to a specific special day (e.g. Mother’s Day, Valentine's Day) in which the sessions are more likely to be finalized with the transaction
+* Month - it shows the month the visitor used the site
+* OperatingSystems - this shows the OS of the visitor
+* Browser - this shows the browser the visitor is using
+* Region - this shows the region the visitor is from
+* TrafficType - this shows the traffic type of the visitor
+* VisitorType - this shows the type of visitor
+* Weekend - this shows whether the visitor used the site on a weekend or weekday
+* Revenue - this shows whether the visitor purchased something or not
+
+## d. Recording the Experimental Design
+
+For this project, I'll be doing the following:
+
+* Data cleaning
+* Exploratory Data Analysis with focus on univariate and bivariate analysis
+* Unsupervised Learning models; K-Means clustering and Hierarchical Clustering
+
+## e. Data relevance
+
+The data provided is of relevance to the question.
+
+
+# 2. Data Sourcing
+
+The data has been sourced from the brand Kira Plastinina.
+
+# 3. Checking the Data
+
+Begin by loading the dataset and displaying the first 6 rows.
+
+```{r}
+shoppers <- read.csv('http://bit.ly/EcommerceCustomersDataset')
+head(shoppers)
+```
+
+Then we check the dimensions of the dataset. It has 12330 rows and 18 columns.
+
+```{r}
+dim(shoppers)
+```
+
+We check for the structure of the dataset
+
+```{r}
+str(shoppers)
+```
+
+Check the descriptive statistics of the dataset.
+
+```{r}
+summary(shoppers)
+```
+
+Check the datatypes of all the variables in the dataframe. 14 variables are either integer/numeric. 2 of the variables are character and the other 2 are logical variables.
+
+```{r}
+sapply(shoppers, class)
+```
+
+Check the unique values in the variables.
+
+```{r}
+length(unique(shoppers$Administrative))
+length(unique(shoppers$Administrative_Duration))
+length(unique(shoppers$Informational))
+length(unique(shoppers$Informational_Duration))
+length(unique(shoppers$ProductRelated))
+length(unique(shoppers$ProductRelated_Duration))
+length(unique(shoppers$BounceRates))
+length(unique(shoppers$ExitRates))
+length(unique(shoppers$PageValues))
+length(unique(shoppers$SpecialDay))
+length(unique(shoppers$Month))
+length(unique(shoppers$OperatingSystems))
+length(unique(shoppers$Browser))
+length(unique(shoppers$Region))
+length(unique(shoppers$TrafficType))
+length(unique(shoppers$VisitorType))
+length(unique(shoppers$Weekend))
+length(unique(shoppers$Revenue))
+```
+
+
+# 4. Cleaning the Data
+
+Begin by checking for missing values. There are 112 missing entries.
+
+```{r}
+length(which(is.na(shoppers)))
+```
+
+Find the total missing values in each column. There are 14 missing entries each in some of the columns affected.
+
+```{r}
+colSums(is.na(shoppers))
+```
+
+Since the number of entries that are missing are not a lot, I will omit the missing values. Create a new dataset without the missing values.
+
+```{r}
+new_shoppers <- na.omit(shoppers)
+```
+
+Confirm that there are no missing values. Check the dimensions of the new dataset.
+
+```{r}
+length(which(is.na(new_shoppers)))
+
+dim(new_shoppers)
+```
+
+Then we remove duplicates and create a new dataset without the duplicates.
+
+```{r}
+new_dfshoppers <- new_shoppers[!duplicated(new_shoppers),]
+head(new_dfshoppers)
+
+dim(new_dfshoppers)
+```
+
+Check for outliers. Plot boxplots for the numerical variables.
+
+```{r}
+boxplot(new_dfshoppers$Administrative, 
+        data = new_dfshoppers,
+        main="Boxplot for Administrative",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$Administrative_Duration, 
+        data = new_dfshoppers,
+        main="Boxplot for Administrative_Duration",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$Informational, 
+        data = new_dfshoppers,
+        main="Boxplot for Informational",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$Informational_Duration, 
+        data = new_dfshoppers,
+        main="Boxplot for Informational_Duration",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$ProductRelated, 
+        data = new_dfshoppers,
+        main="Boxplot for ProductRelated",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$ProductRelated_Duration, 
+        data = new_dfshoppers,
+        main="Boxplot for ProductRelated_Duration",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$BounceRates, 
+        data = new_dfshoppers,
+        main="Boxplot for BounceRates",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$ExitRates, 
+        data = new_dfshoppers,
+        main="Boxplot for ExitRates",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$PageValues, 
+        data = new_dfshoppers,
+        main="Boxplot for PageValues",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$SpecialDay, 
+        data = new_dfshoppers,
+        main="Boxplot for SpecialDay",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$OperatingSystems, 
+        data = new_dfshoppers,
+        main="Boxplot for OperatingSystems",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$Browser, 
+        data = new_dfshoppers,
+        main="Boxplot for Browser",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$Region, 
+        data = new_dfshoppers,
+        main="Boxplot for Region",
+        col="orange",
+        border="brown"
+)
+
+boxplot(new_dfshoppers$TrafficType, 
+        data = new_dfshoppers,
+        main="Boxplot for TrafficType",
+        col="orange",
+        border="brown"
+)
+```
+
+From the boxplots, we can see that all the numerical variables have outliers. I won't remove them as it is normal to have values that are higher than average in all the categories
+
+# 5. Exploratory Data Analysis
+## 5.1 Univariate Analysis: Numerical Variables
+
+* Histograms
+
+```{r}
+Administrative <- new_dfshoppers$Administrative
+hist(Administrative)
+
+Administrative_Duration <- new_dfshoppers$Administrative_Duration
+hist(Administrative_Duration)
+
+
+Informational <- new_dfshoppers$Informational
+hist(Informational)
+
+
+Informational_Duration <- new_dfshoppers$Informational_Duration
+hist(Informational_Duration)
+
+
+ProductRelated <- new_dfshoppers$ProductRelated
+hist(ProductRelated)
+
+
+ProductRelated_Duration <- new_dfshoppers$ProductRelated_Duration
+hist(ProductRelated_Duration)
+
+
+BounceRates <- new_dfshoppers$BounceRates
+hist(BounceRates)
+
+
+ExitRates <- new_dfshoppers$ExitRates
+hist(ExitRates)
+
+
+PageValues <- new_dfshoppers$PageValues
+hist(PageValues)
+
+
+SpecialDay <- new_dfshoppers$SpecialDay
+hist(SpecialDay)
+
+
+OperatingSystems <- new_dfshoppers$OperatingSystems
+hist(OperatingSystems)
+
+
+Browser <- new_dfshoppers$Browser
+hist(Browser)
+
+
+Region <- new_dfshoppers$Region
+hist(Region)
+
+
+TrafficType <- new_dfshoppers$TrafficType
+hist(TrafficType)
+```
+
+**Observations**
+
+1. The variables administrative,administrative duration, informational, informational duration, product related, bounce rates, page values, browser and traffic type are right skewed.
+
+2. The variables product related duration is normally distributed.
+
+3. The variables exit rates, operating systems, region and special day have a bimodal distribution.
+
+## 5.2 Univariate Analysis: Categorical Variables
+
+* Bar charts
+
+```{r}
+months <- new_dfshoppers$Month
+
+months_frequency <- table(months)
+
+barplot(months_frequency, col="blue",
+        main="Months Chart",border="red")
+
+
+visitors <- new_dfshoppers$VisitorType
+
+visitors_frequency <- table(visitors)
+
+barplot(visitors_frequency, col="blue",
+        main="Type of Visitors Chart",border="red")
+
+
+weekend <- new_dfshoppers$Weekend
+
+weekend_frequency <- table(weekend)
+
+barplot(weekend_frequency, col="blue",
+        main="Weekend or Weekday Chart",border="red")
+
+
+revenue <- new_dfshoppers$Revenue
+
+revenue_frequency <- table(revenue)
+
+barplot(revenue_frequency, col="blue",
+        main="Revenue Chart",border="red")
+
+```
+
+
+**Observations**
+
+1. The site has the highest number of visitors in the months of May, November, March and December.
+
+2. Returning visitors on the site are more than the new visitors.
+
+3. Most visitors used the site on the weekdays. False represents weekdays while true represents weekends.
+
+4. Most of the visitors did not end up bringing revenue to the brand.
+
+## 5.3 Bivariate Analysis: Categorical and categorical Variables
+
+* Double bar charts
+
+Compare the categorical variables to the variable revenue.
+
+```{r}
+counts <- table(new_dfshoppers$Revenue, new_dfshoppers$Month)
+barplot(counts, main="Revenue Distribution by Month",
+        xlab="Months", col=c("darkblue","red"),
+        legend = rownames(counts), beside=TRUE)
+
+counts <- table(new_dfshoppers$Revenue, new_dfshoppers$VisitorType)
+barplot(counts, main="Revenue Distribution by VisitorType",
+        xlab="Visitor Type", col=c("darkblue","red"),
+        legend = rownames(counts), beside=TRUE)
+
+counts <- table(new_dfshoppers$Revenue, new_dfshoppers$Weekend)
+barplot(counts, main="Click Distribution by Weekend/Weekday",
+        xlab="Weekend/Weekday", col=c("darkblue","red"),
+        legend = rownames(counts), beside=TRUE)
+```
+
+**Observations**
+
+1. Visitors in the months of November, May, December and March brought the highest revenue to the site.
+
+2. Returning visitors brought more revenue to the site than the other types of visitors.
+
+3. Weekday visitors brought more revenue to the brand than weekend visitors.
+
+
+* Encode the categorical variables to be numerical so we can check for correlation.
+
+```{r}
+encode_ordinal <- function(x, order = unique(x)) {
+  x <- as.numeric(factor(x, levels = order))
+  x
+}
+
+
+table(new_dfshoppers[["Month"]], encode_ordinal(new_dfshoppers[["Month"]]), useNA = "ifany")
+
+table(new_dfshoppers[["VisitorType"]], encode_ordinal(new_dfshoppers[["VisitorType"]]), useNA = "ifany")
+
+table(new_dfshoppers[["Weekend"]], encode_ordinal(new_dfshoppers[["Weekend"]]), useNA = "ifany")
+
+table(new_dfshoppers[["Revenue"]], encode_ordinal(new_dfshoppers[["Revenue"]]), useNA = "ifany")
+
+df <- new_dfshoppers
+df[["Month_encoded"]] <- encode_ordinal(new_dfshoppers[["Month"]])
+df[["VisitorType_encoded"]] <- encode_ordinal(new_dfshoppers[["VisitorType"]])
+df[["Weekend_encoded"]] <- encode_ordinal(new_dfshoppers[["Weekend"]])
+df[["Revenue_encoded"]] <- encode_ordinal(new_dfshoppers[["Revenue"]])
+head(df)
+
+# Drop the categorical columns
+
+new_df= subset(df, select = -c(Month, VisitorType, Weekend, Revenue) )
+head(new_df)
+
+# Confirm the datatypes of the encoded columns
+
+sapply(new_df, class)
+```
+
+## 5.4 Bivariate Analysis: Numerical and numerical Variables
+
+* Correlation Matrix
+
+```{r}
+matrix <- cor(new_df)
+round(matrix, 2)
+
+
+library(corrplot)
+
+# Run the corrplot function
+
+new_df.cor = cor(new_df, method = c("spearman"))
+corrplot(new_df.cor)
+```
+
+**Observations**
+
+1. There is a strong positive correlation between the following variables:
+
+ * Administrative and Administrative duration
+ * Informational and informational duration
+ * Product related and product related duration
+ * Bounce rates and exit rates
+ 
+ 2. The variables with the highest correlation to revenue are:
+ 
+ * Page Values
+ * Product related duration
+ * Administrative
+ * Month
+ * Visitor Type 
+ 
+ 3. The variables with the least correlation to revenue are:
+ 
+ * Bounce rates
+ * Exit rates
+ * Special day
+ * Operating systems
+ * Region
+ * Traffic type
+ 
+* Drop a column each from the pairs of highly correlated variables.
+
+```{r}
+new_df1= subset(new_df, select = -c(Administrative_Duration, Informational_Duration, ProductRelated_Duration, ExitRates) )
+head(new_df1)
+```
+
+
+# 6. Implementing the Solution
+## 6.1 K-Means Clustering
+
+Here we'll find groups of observations (clusters) that share similar characteristics.
+
+First, do preprocessing of the dataset.
+
+```{r}
+features<- new_df1[(1:13)]
+label<- new_df1[14]
+head(features)
+head(label)
+```
+
+Scale the data so it's all standardized.
+
+```{r}
+new_dfnorm <- as.data.frame(scale(features))
+head(new_dfnorm)
+```
+
+Compute k-means using the k-means functions. I'll start with 2 centers.
+
+```{r}
+new_dfK2 <- kmeans(new_dfnorm, centers = 2, nstart = 25)
+print(new_dfK2)
+```
+
+Check the number of records in each cluster
+
+```{r}
+new_dfK2$size
+```
+
+Get the datapoints of THE 2 cluster centers
+
+```{r}
+new_dfK2$centers 
+```
+
+Get the cluster vector that shows the cluster where each record falls
+
+```{r}
+new_dfK2$cluster
+```
+
+Visualize the cluster created
+
+```{r}
+library("factoextra")
+fviz_cluster(new_dfK2, data = new_dfnorm)
+```
+
+Use different values of k and examine results
+
+```{r}
+new_dfK3 <- kmeans(new_dfnorm, centers = 3, nstart = 25)
+new_dfK4 <- kmeans(new_dfnorm, centers = 4, nstart = 25)
+new_dfK5 <- kmeans(new_dfnorm, centers = 5, nstart = 25)
+```
+
+Plot the clusters for the different k values
+
+```{r}
+p1 <- fviz_cluster(new_dfK2, geom = "point", data = new_dfnorm) + ggtitle(" K = 2")
+p2 <- fviz_cluster(new_dfK3, geom = "point", data = new_dfnorm) + ggtitle(" K = 3")
+p3 <- fviz_cluster(new_dfK4, geom = "point", data = new_dfnorm) + ggtitle(" K = 4")
+p4 <- fviz_cluster(new_dfK5, geom = "point", data = new_dfnorm) + ggtitle(" K = 5")
+
+library("gridExtra")
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+
+```
+
+
+**Observations**
+
+1. There is overlapping between the clusters especially as the value of k increases.
+2. The clusters do not form spherical shapes. 
+3. At k = 3, there is least overlapping between the clusters.
+
+## 6.2 Hierarchical Clustering
+
+Here we build a hierarchy of clusters.
+
+Use the dist() function to compute the Euclidean distance between observations, d will be the first argument in the hclust() function dissimilarity matrix
+
+```{r}
+d <- dist(new_dfnorm, method = "euclidean")
+```
+
+Do hierarchical clustering using the Ward's method
+
+```{r}
+res.hc <- hclust(d, method = "ward.D2" )
+```
+
+
+Plot the obtained dendrogram
+
+```{r}
+plot(res.hc, cex = 0.6, hang = -1)
+```
+
+**Observations**
+
+1. The dendogram forms a lot of clusters. It is not very useful in this case in understanding the data.
+
+**Comparison between the two approaches**
+
+1. Hierarchical clustering took a longer time computing than k-means clustering.
+2. K-Means worked better in this case since the dataset was big. The dendogram was not very clear due to the size of the dataset.
+
+
+# 7. Challenging the Solution
+
+1. To get a good answer to the business objective, I'd try working with a subset of the data to see if the observations would be clearer.
+
+2. Maybe other clustering methods would work better for this problem objective.
+
+# 8. Follow up Questions
+
+1. Did we have the right data
+
+* The data provided for this question was relevant and yielded good results
+
+2. Do we need other data to answer our questions
+
+* No. The data provided was sufficient
+
+3. Do we have the right question
+
+* The question was right for the data given
+
+
